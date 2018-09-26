@@ -9,8 +9,6 @@
 #define AA_LEVEL 4
 #define abs(x) ((x > 0) ? (x) : -(x))
 
-int time = 0;
-
 struct frac_bounds
 {
   double r_min, r_max;
