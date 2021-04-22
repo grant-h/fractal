@@ -1,2 +1,2 @@
 all:
-	gcc $(shell sdl-config --cflags --libs) -o frac frac.c
+	gcc $(shell sdl2-config --cflags --libs) -o frac frac.c

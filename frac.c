@@ -1,4 +1,4 @@
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sys/time.h>
@@ -34,7 +34,7 @@ void frac_zoom(unsigned short x, unsigned short y, double zoom);
 void frac_zbox(unsigned short x1, unsigned short y1, unsigned short x2, unsigned short y2);
 struct color color_fade(struct color color, double fadeVal);
 struct color color_inter(struct color l, struct color r, double val);
-Uint16 frac_map_palette(SDL_Surface * s, int escape);
+Uint32 frac_map_palette(SDL_Surface * s, int escape);
 
 void draw_frac(SDL_Surface * surf);
 void draw_frac_aa(SDL_Surface * surf);
@@ -52,8 +52,24 @@ int main (int argc, char * argv[])
     atexit(SDL_Quit);
 
     // create a new window
-    SDL_Surface* screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 16,
-                                           SDL_HWSURFACE|SDL_DOUBLEBUF);
+    /*SDL_Surface* screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 16,
+                                           SDL_HWSURFACE|SDL_DOUBLEBUF);*/
+    // create a new window
+    SDL_Window *window = SDL_CreateWindow("Fractal",
+                          SDL_WINDOWPOS_UNDEFINED,
+                          SDL_WINDOWPOS_UNDEFINED,
+                          SCREEN_WIDTH, SCREEN_HEIGHT,
+                          0);
+    SDL_Surface *screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
+                                        0x00FF0000,
+                                        0x0000FF00,
+                                        0x000000FF,
+                                        0xFF000000);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Texture *texture = SDL_CreateTexture(renderer,
+                                            SDL_PIXELFORMAT_ARGB8888,
+                                            SDL_TEXTUREACCESS_STREAMING,
+                                            SCREEN_WIDTH, SCREEN_HEIGHT);
     if ( !screen )
     {
         printf("Unable to set 640x480 video: %s\n", SDL_GetError());
@@ -100,7 +116,6 @@ int main (int argc, char * argv[])
                     redraw = true;
                     aa_active = !aa_active; 
                   }
-                    
                   break;
                 }
             case SDL_MOUSEBUTTONDOWN:
@@ -151,7 +166,11 @@ int main (int argc, char * argv[])
             draw_frac(screen);
 
           if(SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
-          SDL_Flip(screen);
+
+          SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
+          SDL_RenderClear(renderer);
+          SDL_RenderCopy(renderer, texture, NULL, NULL);
+          SDL_RenderPresent(renderer);
 
           redraw = false;
         }
@@ -330,7 +349,7 @@ struct color color_inter(struct color l, struct color r, double val)
   return newColor;
 }
 
-Uint16 frac_map_palette(SDL_Surface * s, int escape)
+Uint32 frac_map_palette(SDL_Surface * s, int escape)
 {
   int width = 15;
   int numColors = 3;
@@ -347,7 +366,7 @@ Uint16 frac_map_palette(SDL_Surface * s, int escape)
 
 void draw_frac(SDL_Surface * surf)
 {
-  Uint16 *fbuf = surf->pixels;
+  Uint32 *fbuf = surf->pixels;
 
   double MinRe = bounds.r_min;
   double MaxRe = bounds.r_max;
@@ -394,7 +413,7 @@ void draw_frac(SDL_Surface * surf)
 
 void draw_frac_aa(SDL_Surface * surf)
 {
-  Uint16 *fbuf = surf->pixels;
+  Uint32 *fbuf = surf->pixels;
 
   double MinRe = bounds.r_min; 
   double MaxRe = bounds.r_max;
